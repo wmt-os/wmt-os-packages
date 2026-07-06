@@ -27,5 +27,4 @@ mmdebstrap --variant=buildd --architectures=armel --include="devscripts" \
 	trixie /dev/null \
 	"https://deb.debian.org/debian" "deb-src https://deb.debian.org/debian trixie main"
 
-rm -f "$OUT"/*-dbgsym*.deb
 ls -1 "$OUT"/*.deb

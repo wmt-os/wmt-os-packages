@@ -43,6 +43,9 @@ done
 publish=() err=
 for deb in "$@"; do
 	read -r pkg ver < <(dpkg-deb -W "$deb")
+	if [[ $pkg == *-dbgsym ]]; then
+		echo "skip: $pkg (debug symbols)"; continue
+	fi
 	if [[ "$pkg $ver" == *dirty* ]]; then
 		echo "error: $pkg $ver is a dirty build" >&2; err=1; continue
 	fi
