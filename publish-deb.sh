@@ -1,11 +1,11 @@
 #!/bin/bash
 # WMT OS Package Publisher
 #
-# Publish debs to the APT repository: rsync in, validate, prune, reindex, sign, rsync out.
+# Publish debs to the APT repository: rsync in, validate, prune, reindex, sign, rsync out
 #
 # Usage:
 #   ./publish-deb.sh path/to/*.deb    # Validate and publish
-#   ./publish-deb.sh                  # Reindex and sign (non-destructive / initialize empty repo)
+#   ./publish-deb.sh                  # Reindex and sign (non-destructive / initialize empty)
 #
 # Requires: apt-utils dpkg gnupg rsync
 #
@@ -25,10 +25,10 @@ hex12() { [[ $1 =~ ^[0-9a-f]{12}$ ]]; }
 
 exec 9<"$0"; flock 9
 
-# Sync from remote (authoritative)
-if ! rsync -a --delete "$REMOTE/" "$MIRROR/" 2>/dev/null; then
-	case $REMOTE in
-	*:*) echo "publish-deb: cannot sync from $REMOTE" >&2; exit 1 ;;
+# Sync from the archive (authoritative)
+if ! rsync -a --delete "$ARCHIVE/" "$MIRROR/" 2>/dev/null; then
+	case $ARCHIVE in
+	*:*) echo "publish-deb: cannot sync from $ARCHIVE" >&2; exit 1 ;;
 	esac
 fi
 mkdir -p "$POOL" "$DIST/main/binary-armel"
@@ -94,9 +94,9 @@ gzip -9nc "$DIST/main/binary-armel/Packages" > "$DIST/main/binary-armel/Packages
 (cd "$MIRROR" && apt-ftparchive -c "$SRC/apt-ftparchive.conf" release dists/trixie) > "$DIST/Release"
 gpg --batch --yes -u "$KEYID" --clearsign -o "$DIST/InRelease" "$DIST/Release"
 
-# Push to remote: new pool, index swap, then delete old
-case $REMOTE in *:*) ;; *) mkdir -p "$REMOTE" ;; esac
-rsync -a "$MIRROR/pool" "$REMOTE/"
-rsync -ac --delete "$MIRROR/dists" "$REMOTE/" # -c: regenerated indexes fool quick check
-rsync -a --delete "$MIRROR/pool" "$REMOTE/"
-echo "publish-deb: archive updated at $REMOTE"
+# Push to the archive: new pool, index swap, then delete old
+case $ARCHIVE in *:*) ;; *) mkdir -p "$ARCHIVE" ;; esac
+rsync -a "$MIRROR/pool" "$ARCHIVE/"
+rsync -ac --delete "$MIRROR/dists" "$ARCHIVE/" # -c: regenerated indexes fool quick check
+rsync -a --delete "$MIRROR/pool" "$ARCHIVE/"
+echo "publish-deb: archive updated at $ARCHIVE"
