@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # Build the imlib2 armel deb packages
 #
 # Output: ./dist/*.deb (override: OUT=)
@@ -7,10 +7,7 @@
 # Copyright (C) 2026 Logan Russell <me@lrussell.net>
 
 set -eu
-
-SRC=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
-OUT=${OUT:-$SRC/dist}
-. "$SRC"/../../config.sh
+. "$(dirname "$0")/../lib.sh"
 
 WMTOS_REV=1
 DCH_MSG="Fix PNG unaligned access SIGSEGV on armel by building with --enable-packing."
@@ -29,13 +26,13 @@ mmdebstrap --variant=buildd --architectures=armel --include="devscripts" \
 		export DEBFULLNAME="$BUILDER_NAME" DEBEMAIL="$BUILDER_EMAIL"
 		dch -v "\$(dpkg-parsechangelog -S Version)+wmtos$WMTOS_REV" -D trixie "$DCH_MSG"
 		apt-get -y --no-install-recommends build-dep ./
-		dpkg-buildpackage -b -uc -us
+		dpkg-buildpackage -b -uc -us -j$(nproc)
 
 		mkdir /out
 		mv /*.deb /out/
 		EOF
 	)" \
 	--customize-hook="sync-out /out $OUT" \
-	trixie /dev/null "$SRC"/../../debian.sources
+	trixie /dev/null "$SRC"/../debian.sources
 
 ls -1 "$OUT"/*.deb
