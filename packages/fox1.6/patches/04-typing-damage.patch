@@ -1,0 +1,38 @@
+Description: Repaint only from the change when editing a line
+ Every edit brackets its damage to the whole logical line for wrap
+ bookkeeping, so each keypress repaints the entire line and typing
+ slows as the line grows. Characters before the change never move;
+ start the single-row damage at the change position, as the adjacent
+ zero-row branch already does, so appending repaints only the tail.
+Author: Logan Russell <me@lrussell.net>
+--- a/src/FXText.cpp
++++ b/src/FXText.cpp
+@@ -1508,6 +1508,8 @@
+ // This will affect mutation() and perhaps replace() functions below...
+ 
+ // There has been a mutation in the buffer
++static FXint change_pos=-1;       // True position of the last buffer change
++
+ void FXText::mutation(FXint pos,FXint ncins,FXint ncdel,FXint nrins,FXint nrdel){
+   register FXint ncdelta=ncins-ncdel;
+   register FXint nrdelta=nrins-nrdel;
+@@ -1574,6 +1576,11 @@
+         update(x,y,width-x,font->getFontHeight());
+         FXTRACE((150,"update(%d,%d,%d,%d)\n",x,y,width-x,font->getFontHeight()));
+         }
++      else if(nrins==1 && visrows[line]<=change_pos && change_pos<=visrows[line+1]){
++        x=pos_x+marginleft+barwidth+lineWidth(visrows[line],change_pos-visrows[line]);
++        y=pos_y+margintop+(toprow+line)*font->getFontHeight();
++        update(x,y,width-x,font->getFontHeight());
++        }
+       else{
+         y=pos_y+margintop+(toprow+line)*font->getFontHeight();
+         update(barwidth,y,width-barwidth,nrins*font->getFontHeight());
+@@ -1684,6 +1691,7 @@
+   FXTRACE((150,"wbeg=%d wend+n-m=%d nrins=%d ncins=%d length=%d wins=%d hins=%d\n",wbeg,wend+n-m,nrins,ncins,length,wins,hins));
+ 
+   // Update stuff
++  change_pos=pos;
+   mutation(wbeg,ncins,ncdel,nrins,nrdel);
+ 
+   // Fix text metrics

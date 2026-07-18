@@ -1,0 +1,95 @@
+Description: Repaint the selection as it changes during interaction
+ FOX releases queued repaints only when the connection goes idle, so a
+ selection drag starves them and the accumulated damage merges into
+ wide bands that repaint in visible jumps. Dispatch the pending
+ repaint after each selection extension, as the icon list already does
+ mid-drag, so the highlight tracks the mouse and each repaint covers
+ only the newly changed span. Also skip the active-row repaints when
+ the active background matches the plain one and no styles are set,
+ since they redraw identical pixels.
+Author: Logan Russell <me@lrussell.net>
+--- a/src/FXText.cpp
++++ b/src/FXText.cpp
+@@ -2426,6 +2426,7 @@
+         pos=getPosAt(event->win_x,event->win_y);
+         setCursorPos(pos,TRUE);
+         extendSelection(cursorpos,SELECT_CHARS,TRUE);
++        repaint();
+         }
+       return 1;
+     case MOUSE_WORDS:
+@@ -2433,6 +2434,7 @@
+         pos=getPosAt(event->win_x,event->win_y);
+         setCursorPos(pos,TRUE);
+         extendSelection(cursorpos,SELECT_WORDS,TRUE);
++        repaint();
+         }
+       return 1;
+     case MOUSE_LINES:
+@@ -2440,6 +2442,7 @@
+         pos=getPosAt(event->win_x,event->win_y);
+         setCursorPos(pos,TRUE);
+         extendSelection(cursorpos,SELECT_LINES,TRUE);
++        repaint();
+         }
+       return 1;
+     }
+@@ -2458,6 +2461,7 @@
+         pos=getPosAt(event->win_x,event->win_y);
+         setCursorPos(pos,TRUE);
+         extendSelection(cursorpos,SELECT_CHARS,TRUE);
++        repaint();
+         }
+       return 1;
+     case MOUSE_WORDS:
+@@ -2466,6 +2470,7 @@
+         pos=getPosAt(event->win_x,event->win_y);
+         setCursorPos(pos,TRUE);
+         extendSelection(cursorpos,SELECT_WORDS,TRUE);
++        repaint();
+         }
+       return 1;
+     case MOUSE_LINES:
+@@ -2474,6 +2479,7 @@
+         pos=getPosAt(event->win_x,event->win_y);
+         setCursorPos(pos,TRUE);
+         extendSelection(cursorpos,SELECT_LINES,TRUE);
++        repaint();
+         }
+       return 1;
+     case MOUSE_SCROLL:
+@@ -3318,6 +3324,7 @@
+ // Extend
+ long FXText::onCmdExtend(FXObject*,FXSelector,void*){
+   extendSelection(cursorpos,SELECT_CHARS,TRUE);
++  repaint();
+   return 1;
+   }
+ 
+@@ -4774,7 +4781,7 @@
+       else{
+         cursorrow=cursorrow+countRows(cursorstartold,cursorstart);
+         }
+-      if(options&TEXT_SHOWACTIVE){
++      if((options&TEXT_SHOWACTIVE) && (activebackColor!=backColor || hilitestyles)){
+         updateRange(cursorstartold,cursorendold);
+         updateRange(cursorstart,cursorend);
+         }
+--- a/src/FXTextField.cpp
++++ b/src/FXTextField.cpp
+@@ -668,6 +668,7 @@
+         drawCursor(0);
+         cursor=t;
+         extendSelection(cursor);
++        repaint();
+         }
+       }
+     return 1;
+@@ -780,6 +781,7 @@
+       drawCursor(0);
+       cursor=newcursor;
+       extendSelection(cursor);
++      repaint();
+       }
+     }
+   return 1;

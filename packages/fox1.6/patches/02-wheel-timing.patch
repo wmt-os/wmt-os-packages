@@ -1,0 +1,38 @@
+Description: Backport the 1.7 wheel animation timing
+ The wheel glide steps every 5ms in sixteenths, a timer flood that
+ starves the deferred repaints for the whole animation, so scrolled-in
+ content stays blank until the glide ends. FOX 1.7 retimed the
+ animation to frame-length steps in eighths so painting keeps pace
+ between ticks; carry those constants back.
+Author: Logan Russell <me@lrussell.net>
+--- a/src/FXScrollBar.cpp
++++ b/src/FXScrollBar.cpp
+@@ -580,8 +580,8 @@
+           }
+         else{
+           dragjump=(dragpoint-pos);
+-          if(FXABS(dragjump)>16) dragjump/=16;
+-          getApp()->addTimeout(this,ID_TIMEWHEEL,5,(void*)(FXival)dragjump);
++          if(FXABS(dragjump)>8) dragjump/=8;
++          getApp()->addTimeout(this,ID_TIMEWHEEL,17,(void*)(FXival)dragjump);
+           }
+         }
+       else{
+@@ -605,7 +605,7 @@
+       }
+     else{
+       setPosition(p);
+-      getApp()->addTimeout(this,ID_TIMEWHEEL,5,ptr);
++      getApp()->addTimeout(this,ID_TIMEWHEEL,17,ptr);
+       if(target) target->tryHandle(this,FXSEL(SEL_CHANGED,message),(void*)(FXival)pos);
+       }
+     }
+@@ -617,7 +617,7 @@
+       }
+     else{
+       setPosition(p);
+-      getApp()->addTimeout(this,ID_TIMEWHEEL,5,ptr);
++      getApp()->addTimeout(this,ID_TIMEWHEEL,17,ptr);
+       if(target) target->tryHandle(this,FXSEL(SEL_CHANGED,message),(void*)(FXival)pos);
+       }
+     }
